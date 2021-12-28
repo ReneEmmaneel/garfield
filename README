@@ -1,0 +1,36 @@
+[THIS IS JUST SOME WEIRD UNORDERED DOCUMENT TALKING ABOUT THINGS |
+ MIGHT FIX IT LATER SOMEDAY]
+
+Using a VAE architecture
+
+===Possible image sizes??
+
+175x200
+88x100
+44x50
+22x25
+11x13
+
+
+===REMOVE IMAGES===
+
+190108
+200411
+
+====GARFIELDDDDD===
+
+
+gsutil -m cp \
+  "gs://garfield-bucket/README" \
+  "gs://garfield-bucket/cnn_encoder_decoder.py" \
+  "gs://garfield-bucket/data.zip" \
+  "gs://garfield-bucket/data_handler.py" \
+  "gs://garfield-bucket/train_torch.py" \
+  "gs://garfield-bucket/unittests.py" \
+  "gs://garfield-bucket/utils.py" \
+  .
+
+
+unzip data
+
+pip3 install numpy torch torchvision tqdm tensorboard opencv-python matplotlib
