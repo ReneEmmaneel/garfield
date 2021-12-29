@@ -1,5 +1,6 @@
 """Data handler file.
 Used to download all garfield strips and put it in a dataset.
+Call prepare_data_loader(), which returns train/validation/test DataLoaders.
 """
 
 import requests
@@ -62,7 +63,10 @@ class GarfieldDataset(Dataset):
     def __getitem__(self, idx):
         img_path, class_name = self.data[idx]
         pic = plt.imread(img_path)[:,:,:3]
-        pic = cv2.resize(pic, (192,64)) #600,175
+
+        # Resize the image from (600,175) to (600,176), this is because
+        # 176 and 200 (width of 1 panel) is divisible by 8.
+        pic = cv2.resize(pic, (600,176))
         pic_tensor = torch.from_numpy(pic)
         split = pic_tensor.chunk(3, dim=1)
         splitted_tensor = torch.stack(split)
@@ -71,7 +75,10 @@ class GarfieldDataset(Dataset):
 def prepare_data_loader(root='data/all_images/', batch_size=128, num_workers=4, force_download=False):
     download_all_strips(force_download=force_download)
     dataset = GarfieldDataset()
-    train_size = int(0.1 * len(dataset))
+
+    # Only use 10% for training and validation, this is due to memory constraints
+    # Could be increased to potentionally improve performance/reduce overfitting
+    train_size = int(0.15 * len(dataset))
     val_size = int(0.1 * len(dataset))
     test_size = len(dataset) - train_size - val_size
     train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(42))
@@ -81,6 +88,3 @@ def prepare_data_loader(root='data/all_images/', batch_size=128, num_workers=4, 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, shuffle=True, drop_last=False)
 
     return train_loader, val_loader, test_loader
-
-if __name__ == '__main__':
-    t, v, te = prepare_data_loader()

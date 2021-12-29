@@ -26,14 +26,19 @@ class VAE(nn.Module):
         PyTorch module that summarizes all components to train a VAE.
         Inputs:
             z_dim - Dimensionality of latent space
+            num_blocks - number of blocks per resnet layer of same size
+            c_hidden - List with the hidden dimensionalities in the different blocks. Usually multiplied by 2 the deeper we go.
+        num_conv_blocks - number of resnet layers of different sizes
         """
         super().__init__()
         self.z_dim = z_dim
 
         self.beta = beta
 
-        self.encoder = CNNEncoder(z_dim=z_dim, num_blocks=[num_blocks]*3, c_hidden=[c_hidden*2**i for i in range(3)])
-        self.decoder = CNNDecoder(z_dim=z_dim, num_blocks=[num_blocks]*3, c_hidden=[c_hidden*2**i for i in range(3)][::-1])
+        num_conv_blocks = 4
+
+        self.encoder = CNNEncoder(z_dim=z_dim, num_blocks=[num_blocks]*num_conv_blocks, c_hidden=[c_hidden*2**i for i in range(num_conv_blocks)])
+        self.decoder = CNNDecoder(z_dim=z_dim, num_blocks=[num_blocks]*num_conv_blocks, c_hidden=[c_hidden*2**i for i in range(num_conv_blocks)][::-1])
 
     def forward(self, imgs, epoch):
         """
@@ -49,6 +54,11 @@ class VAE(nn.Module):
         """
         imgs = imgs / 255 * 2.0 - 1.0  # Move images between -1 and 1
         mean, std = self.encoder(imgs)
+
+        # Clamp mean and std, this ensures values don't explode
+        mean = torch.clamp(mean, min=-10, max=10)
+        std = torch.clamp(std, min=-8, max=3)
+
         z = sample_reparameterize(mean, torch.exp(std))
         out = self.decoder(z)
 
@@ -71,9 +81,23 @@ class VAE(nn.Module):
         Inputs:
             batch_size - Number of images to generate
         Outputs:
-            x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
+            x_samples - Sampled images. Shape: [B,P,H,W,C]
         """
         z = torch.normal(mean=torch.zeros(batch_size, self.z_dim), std=1).to(self.device)
+        x_samples = self.decoder(z)
+        return x_samples
+
+    def generate_from_z(self, z):
+        """
+        Function for generating an output image from latent space z.
+        Inputs:
+            z - latent space of size [z_dim] or [B,z_dim] as tensor.
+        Outputs:
+            x_samples - Sampled, 4-bit images. Shape: [B,P,H,W,C]
+        """
+        if len(z.size()) == 1:
+            z = z.reshape(1, z.size()[0])
+        z = z.to(self.device)
         x_samples = self.decoder(z)
         return x_samples
 
@@ -108,7 +132,6 @@ def sample_and_save(model, epoch, summary_writer, log_dir, batch_size=1):
     """
 
     samples = model.sample(batch_size)
-    #samples = F.softmax(samples, dim=2)
 
     B, P, H, W, C = samples.size()
 
@@ -258,7 +281,7 @@ def main(args):
         experiment_dir = args.continue_from
         print(f'Continuing from {experiment_dir}\nWarning: summary writer is not used when continue training')
         summary_writer = None
-        #TODO: make summary writer work when continue training
+        #Note: summary writer does not work when continuing training
     else:
         experiment_dir = os.path.join(args.log_dir, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
         summary_writer = SummaryWriter(experiment_dir)
@@ -374,11 +397,11 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Model hyperparameters
-    parser.add_argument('--z_dim', default=20, type=int,
+    parser.add_argument('--z_dim', default=750, type=int,
                         help='Dimensionality of latent space')
-    parser.add_argument('--num_blocks', default=6, type=int,
+    parser.add_argument('--num_blocks', default=2, type=int,
                         help='Number of blocks in each set of equal sized convolutions')
-    parser.add_argument('--c_hidden', default=16, type=int,
+    parser.add_argument('--c_hidden', default=4, type=int,
                         help='Number of channels in convolutions')
 
     # Optimizer hyperparameters
@@ -396,7 +419,7 @@ if __name__ == '__main__':
                         help='Max number of epochs')
     parser.add_argument('--seed', default=42, type=int,
                         help='Seed to use for reproducing results')
-    parser.add_argument('--num_workers', default=4, type=int,
+    parser.add_argument('--num_workers', default=0, type=int,
                         help='Number of workers to use in the data loaders. To have a truly deterministic run, this has to be 0. ' + \
                              'For your assignment report, you can use multiple workers (e.g. 4) and do not have to set it to 0.')
     parser.add_argument('--progress_bar', action='store_true',

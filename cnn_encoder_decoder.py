@@ -56,7 +56,7 @@ class ResNetBlock(nn.Module):
 class CNNEncoder(nn.Module):
     def __init__(self, num_input_channels: int = 3,
                  z_dim: int = 20, num_blocks=[6,6,6], c_hidden=[16,32,64],
-                 last_conv_size=16):
+                 last_conv_size=(25,22)):
         """Encoder with a CNN network
 
         Inputs:
@@ -65,7 +65,8 @@ class CNNEncoder(nn.Module):
             z_dim - Dimensionality of latent representation z
             num_blocks - List with the number of ResNet blocks to use. The first block of each group uses downsampling.
             c_hidden - List with the hidden dimensionalities in the different blocks. Usually multiplied by 2 the deeper we go.
-            last_conv_size - The size of the last convolutional layer
+            last_conv_size - The size of the last convolutional layer (height x width)
+            to_input_size - First transform image to this size, to easily downsample
         """
         super().__init__()
         act_fn = nn.ReLU
@@ -90,7 +91,7 @@ class CNNEncoder(nn.Module):
 
         self.flatten_net = nn.Sequential(
             nn.Flatten(), # Image grid to single feature vector
-            nn.Linear(last_conv_size**2 * c_hidden[-1], 2*z_dim),
+            nn.Linear(last_conv_size[0] * last_conv_size[1] * c_hidden[-1], 2*z_dim),
             nn.BatchNorm1d(2*z_dim),
             act_fn()
         )
@@ -128,18 +129,18 @@ class CNNEncoder(nn.Module):
         x = torch.chunk(x, 2, dim=-1)
         return x[0], x[1]
 
-class MakeSquare(nn.Module):
-    def __init__(self, size=4):
+class MakeRectangle(nn.Module):
+    def __init__(self, size=(25,22)):
         super().__init__()
         self.size = size
 
     def forward(self, x):
-        return x.reshape(x.shape[0], -1, self.size, self.size)
+        return x.reshape(x.shape[0], -1, self.size[1], self.size[0])
 
 class CNNDecoder(nn.Module):
     def __init__(self, num_input_channels: int = 3,
                  z_dim: int = 20, num_blocks=[6,6,6], c_hidden=[64,32,16],
-                 first_conv_size=16):
+                 first_conv_size=(25,22)):
         """Decoder with a CNN network.
 
         Inputs:
@@ -147,14 +148,14 @@ class CNNDecoder(nn.Module):
             z_dim - Dimensionality of latent representation z
             num_blocks - List with the number of ResNet blocks to use. The last block of each group, except last, uses upsampling.
             c_hidden - List with the hidden dimensionalities in the different blocks. Usually divided by 2 the deeper we go.
-            first_conv_size - The size of the first convolutional layer
+            first_conv_size - The size of the first convolutional layer (width by heights)
         """
         super().__init__()
         act_fn = nn.ReLU
 
         self.input_net = nn.Sequential(
-            nn.Linear(z_dim, first_conv_size**2 * c_hidden[0]),
-            MakeSquare(first_conv_size),
+            nn.Linear(z_dim, first_conv_size[0] * first_conv_size[1] * c_hidden[0]),
+            MakeRectangle(first_conv_size),
             act_fn()
         )
 
