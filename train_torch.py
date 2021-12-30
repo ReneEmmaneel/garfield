@@ -87,6 +87,7 @@ class VAE(nn.Module):
         x_samples = self.decoder(z)
         return x_samples
 
+    @torch.no_grad()
     def generate_from_z(self, z):
         """
         Function for generating an output image from latent space z.
@@ -100,6 +101,12 @@ class VAE(nn.Module):
         z = z.to(self.device)
         x_samples = self.decoder(z)
         return x_samples
+
+    @torch.no_grad()
+    def get_z(self, imgs):
+        imgs = imgs / 255 * 2.0 - 1.0  # Move images between -1 and 1
+        mean, std = self.encoder(imgs)
+        return mean, std
 
     @torch.no_grad()
     def reconstruct_from_image(self, imgs):
