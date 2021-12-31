@@ -1,10 +1,10 @@
-#Garfield Variational Autoencoder (VAE)
+# Garfield Variational Autoencoder (VAE)
 
 A VAE is an autoencoder, with the goal of reconstructing an input image while first pushing it through a bottleneck (latent space)
 In this repository the garfield strips are used as the dataset.
 There is functionality to download the dataset, to train the dataset and to use the trained model for generating new garfield strips.
 
-##The structure
+## The structure
 
 The VAE consist of an encoder and decoder.
 The encoder learns a distribution of the input image of a given dimensionality.
@@ -21,7 +21,7 @@ Here, KL is the Kullback–Leibler divergence where a lower value means the late
 The KL divergence is used to prevent overfitting: otherwise each input image would just map to an unique point in the latent space instead of learning features.
 The beta value is a hyperparameter.
 
-##Usage
+## Usage
 
 `train_torch.py` will download the garfield dataset (this can take a while) and then train the model using the given parameters.
 The command used to train `TODO: folder_name` is as follows:
