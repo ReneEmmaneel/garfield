@@ -17,6 +17,11 @@ from torchvision.utils import make_grid, save_image
 
 import matplotlib.pyplot as plt
 
+def make_archive(root='data/all_images/'):
+    if os.path.exists(root):
+        shutil.make_archive(f'{root}', 'zip', root)
+        shutil.rmtree(root)
+
 def daterange(start_date, end_date):
     """Generator for a range of dates"""
     for n in range(int((end_date - start_date).days)):
@@ -35,6 +40,7 @@ def download_all_strips(root='data/all_images/', force_download=False):
     start_date = date(1978, 6, 19)
     end_date = date.today()
     for single_date in daterange(start_date, end_date):
+        print(single_date.strftime('Downloading garfield commics, currently on %y-%m-%d'), end='\r')
         if single_date.weekday() == 6:
             continue
         download_url = single_date.strftime(pic_url)
@@ -43,12 +49,7 @@ def download_all_strips(root='data/all_images/', force_download=False):
         img_data = requests.get(download_url).content
         with open(save_path, 'wb') as handler:
             handler.write(img_data)
-
-def make_archive(root='data/all_images/'):
-    #Note: unused
-    if os.path.exists(root):
-        shutil.make_archive(f'{root}', 'zip', root)
-        shutil.rmtree(root)
+    print(single_date.strftime('Done downloading garfield comics'))
 
 class GarfieldDataset(Dataset):
     def __init__(self, root='data/all_images/'):
@@ -76,7 +77,7 @@ def prepare_data_loader(root='data/all_images/', batch_size=128, num_workers=4, 
     download_all_strips(force_download=force_download)
     dataset = GarfieldDataset()
 
-    # Only use 10% for training and validation, this is due to memory constraints
+    # Only use 15% for training and validation, this is due to memory constraints
     # Could be increased to potentionally improve performance/reduce overfitting
     train_size = int(0.15 * len(dataset))
     val_size = int(0.1 * len(dataset))

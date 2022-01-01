@@ -68,7 +68,7 @@ class VAE(nn.Module):
         #Count Regularization loss more the longer the training goes on
         beta = self.beta
         if epoch >= 50: beta *= 4
-        if epoch >= 150: beta *= 4
+        if epoch >= 100: beta *= 4
 
         loss = L_rec + beta * L_reg
 
@@ -261,6 +261,7 @@ def train_vae(model, train_loader, optimizer, epoch):
     average_rec_loss = total_rec_loss / num_samples
     average_reg_loss = total_reg_loss / num_samples
     return average_loss, average_rec_loss, average_reg_loss
+
 
 def seed_everything(seed):
     random.seed(seed)
