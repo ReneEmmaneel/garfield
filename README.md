@@ -24,11 +24,11 @@ The beta value is a hyperparameter.
 ## Usage
 
 `train_torch.py` will download the garfield dataset (this can take a while) and then train the model using the given parameters.
-The command used to train `TODO: folder_name` is as follows:
+The command used to train is as follows:
 
 `python3 train_torch.py --beta 0.0001 --z_dim 1024 --batch_size 64 --epochs 400 --progress_bar --num_workers 0 --num_blocks 2 --c_hidden 6`
 
 To use a trained model for generating new strips use `process_model.py`. It can take a while to calculate the PCA. 
 Note that you need to add the model parameters as used when training the model.
 
-`python process_model.py --experiment_dir logs/2021_12_30_17_37_38/ --z_dim 1024 --c_hidden 6 --progress_bar`
+`python process_model.py --experiment_dir logs/[dir_name]/ --z_dim 1024 --c_hidden 6 --progress_bar`
