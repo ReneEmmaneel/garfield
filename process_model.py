@@ -82,13 +82,13 @@ def visualize(args):
     #Load model
     model = VAE(z_dim=args.z_dim, num_blocks=args.num_blocks, c_hidden=args.c_hidden,
                 beta=args.beta, lr=args.lr)
-    checkpoint_path = os.path.join(args.experiment_dir, 'checkpoints', 'model.pt')
+    checkpoint_path = args.model_file
     model.load_state_dict(torch.load(checkpoint_path))
 
     #Calculate PCA
     train_loader, val_loader, test_loader = prepare_data_loader(batch_size=args.batch_size, num_workers=args.num_workers)
-    test_loader = (tqdm(test_loader, desc="Calculating PCA", leave=False)
-                      if args.progress_bar else test_loader)
+    test_loader = (test_loader if args.no_progress_bar else
+                    tqdm(test_loader, desc="Calculating PCA", leave=False))
     pca = calculate_pca(model, test_loader)
 
     #Create image when all sliders are set to 0
@@ -134,11 +134,11 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # Model hyperparameters
-    parser.add_argument('--z_dim', default=750, type=int,
+    parser.add_argument('--z_dim', default=1024, type=int,
                         help='Dimensionality of latent space')
     parser.add_argument('--num_blocks', default=2, type=int,
                         help='Number of blocks in each set of equal sized convolutions')
-    parser.add_argument('--c_hidden', default=4, type=int,
+    parser.add_argument('--c_hidden', default=6, type=int,
                         help='Number of channels in convolutions')
 
     # Other hyperparameters
@@ -148,13 +148,13 @@ if __name__ == '__main__':
                         help='Beta')
     parser.add_argument('--batch_size', default=128, type=int,
                         help='Minibatch size')
-    parser.add_argument('--experiment_dir', default='', type=str,
-                        help='Directory containing model to process.')
+    parser.add_argument('--model_file', default='results/model.pt', type=str,
+                        help='File containing model to process.')
     parser.add_argument('--num_workers', default=0, type=int,
                         help='Number of workers to use in the data loaders. To have a truly deterministic run, this has to be 0. ' + \
                              'For your assignment report, you can use multiple workers (e.g. 4) and do not have to set it to 0.')
-    parser.add_argument('--progress_bar', action='store_true',
-                        help=('Use a progress bar indicator for interactive experimentation. '))
+    parser.add_argument('--no_progress_bar', action='store_true',
+                        help=('Do not use a progress bar indicator for interactive experimentation. '))
 
 
     args = parser.parse_args()
