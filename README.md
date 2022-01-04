@@ -38,3 +38,5 @@ The standard parameters are for the model in `results/model.pt`, so simply call
 
 In the folder results is a model file (which can be used with `process_model.py`), and three folder with images.
 Reconstruction_train shows reconstruction from the training set, reconstruction_validation shows reconstructions from the validation set and samples shows 3 samples.
+The process widget can be used to explore the trained samples. A screenshot of it is shown here:
+![alt text](https://raw.githubusercontent.com/reneemmaneel/garfield/master/results/process_screenshot.jpg)
